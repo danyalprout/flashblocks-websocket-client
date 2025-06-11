@@ -1,14 +1,15 @@
 # WebSocket Client Utility
 
-A simple Go utility to connect to WebSocket endpoints and display messages with optional brotli compression support.
+A simple Go utility to connect to WebSocket endpoints and automatically detect and display plain JSON or brotli-compressed JSON messages.
 
 ## Features
 
 - Connect to any WebSocket endpoint
-- Two output formats:
-  - **plain**: Display raw message data as-is
-  - **compressed**: Decompress brotli data and pretty-print JSON
-- Default format is compressed
+- Automatic format detection:
+  - First tries to parse as plain JSON
+  - If that fails, attempts brotli decompression then JSON parsing
+  - Falls back to raw output if all parsing fails
+- Pretty-printed JSON output
 - Graceful shutdown with Ctrl+C
 
 ## Installation
@@ -30,55 +31,44 @@ go build -o wsclient
 ## Usage
 
 ```bash
-# Connect with compressed format (default)
+# Connect to websocket (auto-detects format)
 flashblocks-websocket-client ws://example.com/websocket
-
-# Connect with plain format
-flashblocks-websocket-client ws://example.com/websocket -format plain
-
-# Connect with compressed format (explicit)
-flashblocks-websocket-client ws://example.com/websocket -format compressed
 ```
 
 If you built from source:
 
 ```bash
-# Connect with compressed format (default)
+# Connect to websocket (auto-detects format)
 ./wsclient ws://example.com/websocket
-
-# Connect with plain format
-./wsclient ws://example.com/websocket -format plain
 ```
 
 ### Arguments
 
 - First argument (required): WebSocket URL to connect to
-- `-format` (optional): Output format - either `plain` or `compressed` (default: `compressed`)
 
 ## Examples
 
 ```bash
-# Basic usage with compressed JSON output
+# Basic usage with auto-detection
 flashblocks-websocket-client ws://localhost:8080/ws
 
-# Raw data output
-flashblocks-websocket-client wss://api.example.com/stream -format plain
+# Secure websocket
+flashblocks-websocket-client wss://api.example.com/stream
 
 # Using local build
 ./wsclient ws://localhost:8080/ws
-./wsclient wss://api.example.com/stream -format plain
+./wsclient wss://api.example.com/stream
 ```
 
-## Output Formats
+## How It Works
 
-### Plain Format
-Prints raw WebSocket messages exactly as received.
+The utility automatically detects the data format for each message:
 
-### Compressed Format (Default)
-1. Decompresses brotli-compressed data
-2. Attempts to parse as JSON
-3. Pretty-prints JSON with proper indentation
-4. Falls back to raw decompressed data if not valid JSON
+1. **Plain JSON**: If the raw message can be parsed as JSON, it's pretty-printed directly
+2. **Brotli-compressed JSON**: If JSON parsing fails, the message is decompressed with brotli and then parsed as JSON
+3. **Raw output**: If both JSON parsing and brotli decompression fail, the raw message is displayed
+
+This means you don't need to specify the format - the tool handles both plain and compressed data automatically.
 
 ## Dependencies
 
